@@ -94,7 +94,7 @@ const Login = () => {
                     {/* Footer */}
                     <div className="border-t border-slate-200 bg-slate-50 p-4 text-center">
                         <p className="text-sm text-slate-600">
-                            Don't have an account?{' '}
+                            Dont have an account?{' '}
                             <Link href="/register" className="font-medium text-slate-800 hover:text-slate-600 transition-colors">
                                 Create account
                             </Link>

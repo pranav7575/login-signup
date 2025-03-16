@@ -2,9 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Github from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import connectDB from "@/lib/db";
-import { compare } from "bcryptjs";
-import User from "@/models/user";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -23,37 +20,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        const email = credentials.email || undefined;
-        const password = credentials.password || undefined;
+        try {
+          const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/credentials`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(credentials),
+          });
 
-        if (!email || !password) {
-          throw new Error("Please enter your email and password");
+          if (!response.ok) {
+            throw new Error("Authentication failed");
+          }
+
+          const userData = await response.json();
+          return userData;
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
         }
-
-        await connectDB();
-
-        const user = await User.findOne({ email }).select("+password +role");
-        if (!user) {
-          throw new Error("Invalid email or password");
-        }
-
-        if (!user.password) {
-          throw new Error("Invalid email or password");
-        }
-
-        const isMatched = await compare(password, user.password);
-        if (!isMatched) {
-          throw new Error("Password does not match");
-        }
-
-        const userData = {
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          id: user._id,
-        };
-
-        return userData;
       },
     }),
   ],
@@ -63,28 +48,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account.provider === "github" || account.provider === "google") {
-        await connectDB();
-
-        let existingUser = await User.findOne({ email: profile.email });
-
-        if (!existingUser) {
-          // Create a new user if they don't exist
-          existingUser = await User.create({
-            name: profile.name || "Anonymous",
-            email: profile.email,
-            image: profile.image || profile.picture,
-            authproviderId: account.providerAccountId,
-            role: "user",
+        try {
+          const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/oauth`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              provider: account.provider,
+              profile,
+              providerAccountId: account.providerAccountId,
+            }),
           });
+
+          if (!response.ok) {
+            return false;
+          }
+
+          const userData = await response.json();
+          user.id = userData.id;
+          user.role = userData.role;
+        } catch (error) {
+          console.error("OAuth sign-in error:", error);
+          return false;
         }
-
-        user.id = existingUser._id;
-        user.role = existingUser.role;
       }
-
       return true;
     },
-    async session({ session, user, token }) {
+    async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;
