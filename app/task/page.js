@@ -1,7 +1,7 @@
 // app/profile/page.js
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import ProfileClient from '@/components/ProfileClient';
+import Task from '@/components/task';
 
 export default async function Profile() {
   // Fetch the session
@@ -13,5 +13,5 @@ export default async function Profile() {
   }
 
   // Pass the user data to the Client Component
-  return <ProfileClient user={session.user} />;
+  return <Task user={session.user} />;
 }

@@ -6,7 +6,6 @@ import { handlesignout } from '@/action/user';
 
 const Navbar = async () => {
   const session = await auth(); // Get the session
-  console.log(session);
 
   return (
     <nav className="bg-slate-800 shadow-md border-b border-slate-700">
@@ -32,6 +31,9 @@ const Navbar = async () => {
                 </div>
                 <Link href="/profile" className="text-slate-300 hover:text-white transition-colors text-sm">
                   Profile
+                </Link>
+                <Link href="/task" className="text-slate-300 hover:text-white transition-colors text-sm">
+                  Task
                 </Link>
                 <form action={handlesignout}>
                   <Button className="bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm border border-slate-600">

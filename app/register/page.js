@@ -24,10 +24,28 @@ const Register = () => {
 
     // If passwords match, clear any previous error and submit the form
     setError('');
-   const responce= await register(formData); // Call the server action
-   const error = responce.toString();
-   if (error) {
-      setError(error);
+    try {
+      const response = await fetch("/api/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
+          password: formData.get("password"),
+        }),
+      });
+  
+      const result = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(result.message || "Registration failed");
+      }
+  
+      window.location.href = "/login"; // Redirect to login page
+    } catch (err) {
+      setError(err.message);
     }
   };
 
